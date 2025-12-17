@@ -196,7 +196,7 @@ export default function ProfilePage() {
 
               <div className="space-y-3">
                 <div className="p-3 bg-card rounded-lg border border-border">
-                  <p className="text-xs text-muted-foreground">총 상담 횟수</p>
+                  <p className="text-xs text-muted-foreground">총 상담 일수</p>
                   <p className="text-2xl font-bold text-primary mt-1">{profile.conversationCount}</p>
                 </div>
 
