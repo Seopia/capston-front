@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Sun,SunDim, Cloud, CloudRain, Zap,CloudLightning,Tornado, ChevronLeft, ChevronRight, X, TrendingUp, Share2, Wand2, } from "lucide-react"
+import { Sun, SunDim, Cloud, CloudRain, Zap, CloudLightning, Tornado, ChevronLeft, ChevronRight, X, TrendingUp, Share2, Wand2, } from "lucide-react"
 import api from "@/lib/api"
 import BeatLoader from "react-spinners/BeatLoader"
+import { AxiosResponse } from "axios"
+import { getEmotionWeatherIcon } from "@/common/function"
 
 interface EmotionChange {
   count: number
@@ -34,11 +36,10 @@ export default function EmotionCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [selectedEntry, setSelectedEntry] = useState<EmotionEntry | null>(null)
   const [showShareModal, setShowShareModal] = useState(false)
-  const [generatedDiary, setGeneratedDiary] = useState<string | null>(null)
   const [serverData, setServerData] = useState<EmotionEntry[]>([]);
   const [emotionChange, setEmotionChange] = useState<EmotionChange | null>(null);
   const [sharePostTitle, setSharePostTitle] = useState('');
-  const [loading, setLoading] = useState({firstLoading:false,aiLoading:false});
+  const [loading, setLoading] = useState({ firstLoading: false, aiLoading: false });
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
@@ -62,40 +63,62 @@ export default function EmotionCalendar() {
   }
   // 일기 자동 생성 눌렀을 때 작동하는 함수
   const handleGenerateDiary = async () => {
-    if (!selectedEntry) return
-    setLoading(p=>({...p, aiLoading:true}));
+    if (!selectedEntry) return;
+
+    setLoading(p => ({ ...p, aiLoading: true }));
+
+    const { createAt } = selectedEntry;
+    const day = createAt[2];
+    const month = createAt[1];
+    const year = createAt[0];
+
     const res2 = await api.get("/auth/conversations");
-    const res = await api.post('http://localhost:8000/summary', { convId: res2.data[0].id, year:currentDate.getFullYear(), month:currentDate.getMonth()+1, day: currentDate.getDay() })
-    console.log(res);
-    
-    setGeneratedDiary(res.data.summary);
-    setLoading(p=>({...p, aiLoading:false}));
-  }
+    const res = await api.post<string>("http://localhost:8000/summary", {
+      convId: res2.data[0].id,
+      year,
+      month,
+      day,
+    });
+
+    // 선택된 엔트리 업데이트
+    setSelectedEntry(p => (p ? { ...p, summary: res.data } : p));
+
+    // ✅ serverData에서 같은 날짜 항목만 summary 업데이트
+    setServerData(prev =>
+      prev.map(s =>
+        s.createAt[0] === year && s.createAt[1] === month && s.createAt[2] === day
+          ? { ...s, summary: res.data }
+          : s
+      )
+    );
+
+    setLoading(p => ({ ...p, aiLoading: false }));
+  };
   const getEmotionChange = async () => {
     const res = await api.get(`/auth/emotion?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`)
     setEmotionChange(res.data);
   }
   const createOrModifyAnalysis = async () => {
-    setLoading(p=>({...p, firstLoading: true}));
+    setLoading(p => ({ ...p, firstLoading: true }));
     const res2 = await api.get("/auth/conversations");  //채팅방 아이디 가져오고
     await api.post(`http://localhost:8000/analyze`, { convId: res2.data[0].id }); //새로계산해서 ana 쓰기
   }
   const getCalendarData = async () => {
-    const res = await api.get(`/auth/calendar?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`)
+    const res: AxiosResponse<EmotionEntry[]> = await api.get(`/auth/calendar?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`)
+    console.log(res.data);
     setServerData(res.data);
   }
   const shareForum = async () => {
-    const res = await api.post(`/api/board`, { title: sharePostTitle, content: generatedDiary });
+    const res = await api.post(`/api/board`, { title: sharePostTitle, content: selectedEntry?.summary, year: selectedEntry?.createAt[0], month:selectedEntry?.createAt[1], day:selectedEntry?.createAt[2], emotionScore: selectedEntry?.emotionScore } );
     console.log(res);
 
     setShowShareModal(false);
-    // setGeneratedDiary(null);
   }
   useEffect(() => {
     const run = async () => {
       await createOrModifyAnalysis(); //ana 구하고
       await getCalendarData();  //데이터 가져오기
-      setLoading(p=>({...p, firstLoading: false}));
+      setLoading(p => ({ ...p, firstLoading: false }));
     }
     run();
   }, [])
@@ -115,24 +138,7 @@ export default function EmotionCalendar() {
     days.push(i)
   }
   const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"]
-  const getEmotionWeatherIcon = (score: number | undefined) => {
-    if (score === undefined) return [Cloud, "text-gray-400"]
-    console.log(score);
-    
-    if (score === 5) {      
-      return [Sun, "text-red-500"]
-    } else if (score >= 4) {
-      return [SunDim, "text-yellow-500"]
-    } else if (score >= 3) {
-      return [Cloud, "text-blue-400"]
-    } else if(score >=2) {
-      return [CloudRain, "text-blue-500"]
-    } else if(score >= 1){
-      return [CloudLightning, "text-gray-400"]
-    } else {
-      return [Tornado, "text-black-500"]
-    }
-  }
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-background to-muted/20 overflow-hidden">
       {/* Header */}
@@ -144,7 +150,7 @@ export default function EmotionCalendar() {
       <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Calendar */}
-          
+
           <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-6 shadow-sm">
             {/* Month Navigation */}
             <div className="flex items-center justify-between mb-6">
@@ -169,38 +175,38 @@ export default function EmotionCalendar() {
             </div>
 
             {/* Days */}
-            { !loading.firstLoading ?
-            <div className="grid grid-cols-7 gap-2">
-              {days.map((day, index) => {
-                const emotion = day ? getEmotionForDate(day) : null
-                const [WeatherIcon, color] = getEmotionWeatherIcon(emotion?.emotionScore);
-                
+            {!loading.firstLoading ?
+              <div className="grid grid-cols-7 gap-2">
+                {days.map((day, index) => {
+                  const emotion = day ? getEmotionForDate(day) : null
+                  const [WeatherIcon, color] = getEmotionWeatherIcon(emotion?.emotionScore);
 
-                return (
-                  <button
-                    key={index}
-                    onClick={() => emotion && setSelectedEntry(emotion)}
-                    disabled={!emotion}
-                    className={`aspect-square rounded-lg flex items-center justify-center transition-all ${day
-                      ? emotion
-                        ? "bg-primary/10 hover:bg-primary/20 cursor-pointer border border-primary/30"
-                        : "bg-muted text-muted-foreground"
-                      : "bg-transparent"
-                      }`}
-                  >
-                    {day && (
-                      <div className="flex flex-col items-center">
-                        {emotion && WeatherIcon && (
-                          <WeatherIcon style={{scale:1.5}} className={`w-6 h-6 ${emotion && color}`} />
-                        )}
-                        {!emotion && <span className="text-sm text-muted-foreground">{day}</span>}
-                      </div>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-            :<BeatLoader style={{display:'flex', alignItems:'center', justifyContent:'center',height:'70vh'}} size={50} color="#7d98f5"/>}
+
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => emotion && setSelectedEntry(emotion)}
+                      disabled={!emotion}
+                      className={`aspect-square rounded-lg flex items-center justify-center transition-all ${day
+                        ? emotion
+                          ? "bg-primary/10 hover:bg-primary/20 cursor-pointer border border-primary/30"
+                          : "bg-muted text-muted-foreground"
+                        : "bg-transparent"
+                        }`}
+                    >
+                      {day && (
+                        <div className="flex flex-col items-center">
+                          {emotion && WeatherIcon && (
+                            <WeatherIcon style={{ scale: 1.5 }} className={`w-6 h-6 ${emotion && color}`} />
+                          )}
+                          {!emotion && <span className="text-sm text-muted-foreground">{day}</span>}
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+              : <BeatLoader style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '70vh' }} size={50} color="#7d98f5" />}
 
             {/* Legend */}
             <div className="mt-6 pt-6 border-t border-border">
@@ -215,7 +221,7 @@ export default function EmotionCalendar() {
               </div>
             </div>
           </div>
-          
+
 
           {/* Emotion Report */}
           <div className="lg:col-span-1 space-y-4">
@@ -252,7 +258,6 @@ export default function EmotionCalendar() {
                   <button
                     onClick={() => {
                       setSelectedEntry(null)
-                      setGeneratedDiary(null)
                     }}
                     className="p-1 hover:bg-muted rounded-lg transition-colors"
                   >
@@ -264,27 +269,15 @@ export default function EmotionCalendar() {
                   {new Date(`${selectedEntry.createAt[0]}-${selectedEntry.createAt[1]}-${selectedEntry.createAt[2]}`).toLocaleDateString("ko-KR")}
                 </p>
 
-                <div className="mb-4">
+                {/* <div className="mb-4">
                   <p className="text-sm text-foreground leading-relaxed mb-4">{selectedEntry.summary}</p>
-                </div>
-
-                {!generatedDiary ? (
-                  <button
-                    onClick={handleGenerateDiary}
-                    className="w-full mt-4 px-4 py-2 bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                  >
-                    { !loading.aiLoading?
-                      <>
-                    <Wand2 className="w-4 h-4" />
-                    일기 자동 생성
-                    </>
-                    :<BeatLoader style={{display:'flex', alignItems:'center', justifyContent:'center'}} size={20} color="#7d98f5"/>} 
-                  </button>
-                ) : (
+                </div> */}
+                {/* 방금 만든 일기가 없거나 서버에서 가져온 데이터가 있으면? */}
+                {selectedEntry.summary ? (
                   <div className="space-y-2 mt-4">
-                    <div className="p-3 bg-card rounded-lg border border-border max-h-24 overflow-y-auto">
+                    <div className="p-3 bg-card rounded-lg border border-border">
                       <p className="text-xs text-muted-foreground mb-1 font-medium">생성된 일기:</p>
-                      <p className="text-sm text-foreground whitespace-pre-wrap">{generatedDiary}</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">{selectedEntry.summary}</p>
                     </div>
                     <button
                       onClick={() => setShowShareModal(true)}
@@ -293,8 +286,32 @@ export default function EmotionCalendar() {
                       <Share2 className="w-4 h-4" />
                       커뮤니티에 공유하기
                     </button>
+                    <button
+                      onClick={handleGenerateDiary}
+                      className="w-full mt-4 px-4 py-2 bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                    >
+                      {!loading.aiLoading ?
+                        <>
+                          <Wand2 className="w-4 h-4" />
+                          일기 다시 생성하기
+                        </>
+                        : <BeatLoader style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} size={20} color="#7d98f5" />}
+                    </button>
                   </div>
-                )}
+                ) : (
+                  <button
+                    onClick={handleGenerateDiary}
+                    className="w-full mt-4 px-4 py-2 bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                  >
+                    {!loading.aiLoading ?
+                      <>
+                        <Wand2 className="w-4 h-4" />
+                        일기 자동 생성
+                      </>
+                      : <BeatLoader style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} size={20} color="#7d98f5" />}
+                  </button>
+                )
+                }
               </div>
             )}
           </div>
@@ -319,7 +336,7 @@ export default function EmotionCalendar() {
               <div>
                 <p className="text-sm font-medium text-foreground mb-2">공유할 일기:</p>
                 <div className="p-3 bg-muted rounded-lg border border-border max-h-24 overflow-y-auto">
-                  <p className="text-sm text-foreground whitespace-pre-wrap">{generatedDiary}</p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{selectedEntry?.summary}</p>
                 </div>
               </div>
 

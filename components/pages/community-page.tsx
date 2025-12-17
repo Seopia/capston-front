@@ -4,33 +4,27 @@ import { useEffect, useMemo, useState } from "react"
 import {
   Heart,
   MessageCircle,
-  Share2,
-  Sun,
-  Cloud,
-  CloudRain,
-  CloudSnow,
-  Wind,
-  CloudDrizzle,
   X,
   Edit2,
   Trash2,
   Send,
 } from "lucide-react"
 import api from "@/lib/api"
-import { formattedDateTime } from "@/common/function"
+import { formattedDateTime, getEmotionWeatherIcon } from "@/common/function"
 import ReactMarkdown from "react-markdown";
 interface Post {
   id: string
   author: string
   avatar: string
   date: string
-  emotion: "sunny" | "cloudy" | "rainy" | "snowy" | "windy" | "drizzle"
+  emotion: any
   title: string
   content: string
   likes: number
   comments: number
   tags: string[]
   isOwn?: boolean
+  diaryDate: number[]
 }
 
 interface Comment {
@@ -49,10 +43,11 @@ type ForumResponse = {
   content: string
   deleted: boolean
   analysisSummary?: string | null
-  emotionName?: string | null
+  emotionScore?: number | undefined
   commentCount?: number | null
   likeCount?: number | null
   createdAt: number[]
+  diaryDate: number[]
 }
 
 type CommentResponse = {
@@ -63,15 +58,6 @@ type CommentResponse = {
   parentCommentId?: number | null
   deleted: boolean
   createdAt: number[]
-}
-
-const emotionWeatherMap: Record<Post["emotion"], { icon: any; label: string; color: string }> = {
-  sunny: { icon: Sun, label: "맑음", color: "text-yellow-500" },
-  cloudy: { icon: Cloud, label: "흐림", color: "text-gray-400" },
-  rainy: { icon: CloudRain, label: "비", color: "text-blue-500" },
-  snowy: { icon: CloudSnow, label: "눈", color: "text-blue-300" },
-  windy: { icon: Wind, label: "바람", color: "text-gray-500" },
-  drizzle: { icon: CloudDrizzle, label: "이슬비", color: "text-blue-400" },
 }
 
 const sortOptions = ["최신순", "인기순", "댓글순"] as const
@@ -106,24 +92,19 @@ export default function CommunityPage() {
   }
 
   const mapForumToPost = (forum: ForumResponse): Post => {
-    const rawEmotion = (forum.emotionName || "").toLowerCase()
-    const emotionKey: Post["emotion"] =
-      rawEmotion === "sunny" || rawEmotion === "cloudy" || rawEmotion === "rainy" || rawEmotion === "snowy" || rawEmotion === "windy" || rawEmotion === "drizzle"
-        ? (rawEmotion as Post["emotion"])
-        : "sunny"
-
     return {
       id: String(forum.id),
       author: "익명",
       avatar: "👤",
       date: formattedDateTime(forum.createdAt),
-      emotion: emotionKey,
+      emotion: getEmotionWeatherIcon(forum.emotionScore),
       title: forum.title,
       content: forum.content,
       likes: forum.likeCount ?? 0,
       comments: forum.commentCount ?? 0,
       tags: [],
       isOwn: currentUserCode ? forum.userCode === currentUserCode : false,
+      diaryDate: forum.diaryDate
     }
   }
 
@@ -144,6 +125,8 @@ export default function CommunityPage() {
       const res = await api.get<ForumResponse[]>("/api/board", {
         params: sortParam ? { sort: sortParam } : {},
       })
+      console.log(res);
+
       setPosts(res.data.map(mapForumToPost))
     } catch (e) {
       console.error(e)
@@ -183,14 +166,12 @@ export default function CommunityPage() {
 
   useEffect(() => {
     fetchPosts()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (sortBy === "인기순") fetchPosts("likes")
     else if (sortBy === "댓글순") fetchPosts("comments")
     else fetchPosts()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy])
 
   const openDetail = async (postId: string) => {
@@ -277,9 +258,8 @@ export default function CommunityPage() {
             <button
               key={option}
               onClick={() => setSortBy(option)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
-                sortBy === option ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
-              }`}
+              className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${sortBy === option ? "bg-primary text-primary-foreground" : "bg-muted text-foreground hover:bg-muted/80"
+                }`}
             >
               {option}
             </button>
@@ -294,9 +274,9 @@ export default function CommunityPage() {
 
             {!loading &&
               localSortedPosts.map((post) => {
-                const WeatherIcon = emotionWeatherMap[post.emotion].icon
-                const weatherColor = emotionWeatherMap[post.emotion].color
-                const weatherLabel = emotionWeatherMap[post.emotion].label
+                const WeatherIcon = post.emotion[0]
+                const weatherColor = post.emotion[1]
+                const weatherLabel = post.emotion[2]
                 const truncatedContent = truncateText(post.content)
 
                 return (
@@ -317,7 +297,7 @@ export default function CommunityPage() {
                               <span className="font-medium text-sm text-foreground">{post.author}</span>
                               <span className="text-xs text-muted-foreground">{post.date}</span>
                               <div className="flex items-center gap-1 text-xs">
-                                <WeatherIcon className={`w-3 h-3 ${weatherColor}`} />
+                                <WeatherIcon style={{scale:1.5}} className={`w-3 h-3 ${weatherColor}`} />
                                 <span className="text-muted-foreground">{weatherLabel}</span>
                               </div>
                             </div>
@@ -342,6 +322,9 @@ export default function CommunityPage() {
 
                     <div className="p-4 space-y-3">
                       <h3 className="font-semibold text-foreground text-base leading-relaxed">{post.title}</h3>
+                      {post.diaryDate&&
+                        <h4>{`${post?.diaryDate[0]}년 ${post?.diaryDate[1]}월 ${post?.diaryDate[2]}일 작성된 일기`}</h4>
+                      }
                       <p className="text-sm text-foreground/80 leading-relaxed">{truncatedContent}</p>
                     </div>
 
@@ -387,7 +370,7 @@ export default function CommunityPage() {
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-sm text-muted-foreground">감정 상태:</span>
-                        <span className="text-sm text-muted-foreground">{emotionWeatherMap[selectedPost.emotion].label}</span>
+                        <span className="text-sm text-muted-foreground">{selectedPost.emotion[2]}</span>
                       </div>
                     </div>
                   </div>
