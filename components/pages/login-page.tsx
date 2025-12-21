@@ -14,17 +14,22 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md">
+      <div style={{display:'flex', justifyContent:'center',alignItems:'center', flexDirection:'column'}}>
+        <div style={{fontSize:'2em', marginBottom:-40, fontWeight:'bolder'}}>www.react.ai.kr</div>
+        <img className="rounded-2xl m-5" src="/qr2.png"/>
+      </div>
       {/* Main Card */}
       <div className="bg-card rounded-3xl border border-border p-8 shadow-lg">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <div className="p-4 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl">
-              <MessageCircle className="w-8 h-8 text-primary" />
+              {/* <MessageCircle className="w-8 h-8 text-primary" /> */}
+              <img width={100} src="/icon.png"/>
             </div>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
-            마음 속도
+            Refill
           </h1>
           <p className="text-sm text-muted-foreground">AI와 함께 당신의 감정을 나누고 성장해보세요</p>
         </div>
@@ -47,7 +52,7 @@ export default function LoginPage() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-foreground">심리 상담</p>
-              <p className="text-xs text-muted-foreground">전문 상담사와 함께 마음을 돌봐보세요</p>
+              <p className="text-xs text-muted-foreground">전문 상담사 같은 AI와 함께 마음을 돌봐보세요</p>
             </div>
           </div>
 
@@ -64,7 +69,7 @@ export default function LoginPage() {
 
         {/* Login Section */}
         <div className="space-y-4">
-          <img onClick={handleKakaoLogin} className="cursor-pointer" src="kakao-login.png" />
+          <img onClick={handleKakaoLogin} className="cursor-pointer" src="/kakao-login.png" />
         </div>
         <div className="flex items-center justify-center mt-5 bg bg-gradient-to-br from-primary/20 to-secondary/20 p-3 rounded-2xl cursor-pointer"
         onClick={()=>history.push("/")}>

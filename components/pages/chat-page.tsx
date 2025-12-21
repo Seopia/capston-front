@@ -66,7 +66,7 @@ export default function ChatPage() {
     setIsLoading(true)
 
     try {
-      const res = await api.post("http://localhost:8000/chat", {
+      const res = await api.post(`${process.env.NEXT_PUBLIC_FAST_API}/chat`, {
         message: userMessage.text,
         convId: chatRoomId,
       })
@@ -89,9 +89,10 @@ export default function ChatPage() {
   }
 
   const getChatRoomData = async () => {
-    if(!isLoggedIn) return;
+    if(!localStorage.getItem('capstoneToken')) return;
     await api.post("/auth/conversations", { ai: "DEFAULT" })
     const res2 = await api.get("/auth/conversations")
+    
     setChatRoomId(res2.data[0].id)
   }
 
@@ -113,6 +114,8 @@ export default function ChatPage() {
     setIsFetchingPage(true)
     try {
       const res = await api.get(`/auth/messages?roomId=${chatRoomId}&page=${page}`)
+      console.log(res);
+      
       setLast(res.data.last)
       const newMessages: Message[] = res.data.content
         .slice()
@@ -121,7 +124,7 @@ export default function ChatPage() {
           id: `${page}-${i}`,
           text: d.content,
           sender: d.role,
-          timestamp: new Date(d.createdAt[0],d.createdAt[1] - 1,d.createdAt[2],d.createdAt[3],d.createdAt[4],d.createdAt[5],Math.floor(d.createdAt[6] / 1_000_000),
+          timestamp: new Date(d.createAt[0],d.createAt[1] - 1,d.createAt[2],d.createAt[3],d.createAt[4],d.createAt[5],Math.floor(d.createAt[6] / 1_000_000),
           ),
         }))
 
@@ -132,6 +135,7 @@ export default function ChatPage() {
     }
   }
   useEffect(() => {
+    if(!localStorage.getItem('capstoneToken')) return;
     const container = scrollContainerRef.current
     if (!container) return
     if (messages.length === 0) return
@@ -165,7 +169,7 @@ export default function ChatPage() {
           </div>
           <div>
             <h2 className="font-semibold text-foreground">마음 친구와의 상담</h2>
-            <p className="text-xs text-muted-foreground">항상 당신의 말을 경청합니다</p>
+            <p className="text-xs text-muted-foreground">항상 당신의 말을 경청합니다 (채팅 내역은 하루마다 초기화됩니다!)</p>
           </div>
         </div>
       </div>

@@ -8,11 +8,11 @@ import { useAuth } from "@/contenxts/AuthContext"
 
 export default function Navigation() {
   const pathname = usePathname()
-  const [isExpanded, setIsExpanded] = useState(true)
-  const {isLoggedIn, logout} = useAuth();
-  
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { isLoggedIn, logout } = useAuth();
+
   const history = useRouter();
-  
+
   const navItems = [
     { href: "/", label: "홈", icon: Home },
     { href: "/emotion-log", label: "감정 기록", icon: BarChart3 },
@@ -32,7 +32,7 @@ export default function Navigation() {
         {isExpanded && (
           <div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              마음 속도
+              Refill
             </h1>
             <p className="text-xs text-muted-foreground mt-1">AI 감정 상담</p>
           </div>
@@ -57,8 +57,8 @@ export default function Navigation() {
                 <Link
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all justify-center ${isExpanded ? "justify-start" : ""} ${isActive
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-foreground/70 hover:bg-muted hover:text-foreground"
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-foreground/70 hover:bg-muted hover:text-foreground"
                     }`}
                   title={!isExpanded ? item.label : ""}
                 >
@@ -73,22 +73,22 @@ export default function Navigation() {
 
       {/* Footer - 로그인/로그아웃 상태에 따라 버튼 변경 */}
       <div className="p-4 border-t border-border">
-          <button
-            onClick={controlAuth}
-            className={`w-full px-4 py-2 text-sm rounded-lg transition-colors font-medium flex items-center justify-center gap-2 ${isLoggedIn
-                ? "bg-primary/10 hover:bg-primary/20 text-primary"
-                : "bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer"
-              } ${!isExpanded ? "p-2" : ""}`}
-          >
-            {isLoggedIn ? (
-              <>
-                <LogOut className="w-4 h-4" />
-                {isExpanded && "로그아웃"}
-              </>
-            ) : (
-              <>{isExpanded ? "로그인" : "로그"}</>
-            )}
-          </button>
+        <button
+          onClick={controlAuth}
+          className={`w-full px-4 py-2 text-sm rounded-lg transition-colors font-medium flex items-center justify-center gap-2 ${isLoggedIn
+            ? "bg-primary/10 hover:bg-primary/20 text-primary"
+            : "bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer"
+            } ${!isExpanded ? "p-2" : ""}`}
+        >
+          {isLoggedIn ? (
+            <>
+              <LogOut className="w-4 h-4" />
+              {isExpanded && "로그아웃"}
+            </>
+          ) : (
+            <>{isExpanded ? "로그인" : "로그"}</>
+          )}
+        </button>
       </div>
     </nav>
   )

@@ -6,6 +6,8 @@ import api from "@/lib/api"
 import BeatLoader from "react-spinners/BeatLoader"
 import { AxiosResponse } from "axios"
 import { getEmotionWeatherIcon } from "@/common/function"
+import { useAuth } from "@/contenxts/AuthContext"
+import { useRouter } from "next/navigation"
 
 interface EmotionChange {
   count: number
@@ -33,6 +35,8 @@ const emotionWeatherMap = {
 
 export default function EmotionCalendar() {
   const today = new Date()
+  const { isLoggedIn, logout } = useAuth();
+  const history = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
   const [selectedEntry, setSelectedEntry] = useState<EmotionEntry | null>(null)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -73,7 +77,7 @@ export default function EmotionCalendar() {
     const year = createAt[0];
 
     const res2 = await api.get("/auth/conversations");
-    const res = await api.post<string>("http://localhost:8000/summary", {
+    const res = await api.post<string>(`${process.env.NEXT_PUBLIC_FAST_API}/summary`, {
       convId: res2.data[0].id,
       year,
       month,
@@ -101,27 +105,30 @@ export default function EmotionCalendar() {
   const createOrModifyAnalysis = async () => {
     setLoading(p => ({ ...p, firstLoading: true }));
     const res2 = await api.get("/auth/conversations");  //채팅방 아이디 가져오고
-    await api.post(`http://localhost:8000/analyze`, { convId: res2.data[0].id }); //새로계산해서 ana 쓰기
+    await api.post(`${process.env.NEXT_PUBLIC_FAST_API}/analyze`, { convId: res2.data[0].id }); //새로계산해서 ana 쓰기
   }
   const getCalendarData = async () => {
     const res: AxiosResponse<EmotionEntry[]> = await api.get(`/auth/calendar?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`)
-    console.log(res.data);
     setServerData(res.data);
   }
   const shareForum = async () => {
-    const res = await api.post(`/api/board`, { title: sharePostTitle, content: selectedEntry?.summary, year: selectedEntry?.createAt[0], month:selectedEntry?.createAt[1], day:selectedEntry?.createAt[2], emotionScore: selectedEntry?.emotionScore } );
-    console.log(res);
+    const res = await api.post(`/api/board`, { title: sharePostTitle, content: selectedEntry?.summary, year: selectedEntry?.createAt[0], month: selectedEntry?.createAt[1], day: selectedEntry?.createAt[2], emotionScore: selectedEntry?.emotionScore });
 
     setShowShareModal(false);
   }
   useEffect(() => {
-    const run = async () => {
-      await createOrModifyAnalysis(); //ana 구하고
-      await getCalendarData();  //데이터 가져오기
-      setLoading(p => ({ ...p, firstLoading: false }));
+    const token = localStorage.getItem('capstoneToken')
+    if(!token){
+      history.push('/login');
     }
-    run();
+      const run = async () => {
+        await createOrModifyAnalysis(); //ana 구하고
+        await getCalendarData();  //데이터 가져오기
+        setLoading(p => ({ ...p, firstLoading: false }));
+      }
+      run();
   }, [])
+
   useEffect(() => {
     getEmotionChange();
   }, [currentDate])

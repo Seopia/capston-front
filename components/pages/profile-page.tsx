@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import { User, Mail, Calendar, Edit, Save, X, TrendingUp, Clock } from "lucide-react"
 import api from "@/lib/api"
+import { useAuth } from "@/contenxts/AuthContext"
+import { useRouter } from "next/navigation"
 
 interface UserProfile {
   name: string
@@ -20,6 +22,8 @@ type Growth = {
   positivity: number
 }
 export default function ProfilePage() {
+  const { isLoggedIn, logout } = useAuth();
+  const history = useRouter();
   const [isEditing, setIsEditing] = useState(false)
   const [growthData, setGrowthData] = useState<Growth | null>(null);
   const [profile, setProfile] = useState<UserProfile>({
@@ -60,13 +64,17 @@ export default function ProfilePage() {
     const res = await api.get(`/auth/user`);
     setProfile(res.data);
   }
-  const getGrowthData = async() => {
-    
+  const getGrowthData = async () => {
+
     const res = await api.get(`/auth/growth`);
-    
+
     setGrowthData(res.data);
   }
-  useEffect(() => {    
+  useEffect(() => {
+    const token = localStorage.getItem('capstoneToken')
+    if (!token) {
+      history.push('/login');
+    }
     getUserData();
     getGrowthData();
   }, [])
@@ -119,8 +127,8 @@ export default function ProfilePage() {
                   {
                     profile.profileImage ?
                       <img alt="profile-image" className="w-20 h-20 rounded-full object-cover" src={profile.profileImage} />
-                    : <User className="w-10 h-10 text-primary" />
-                }
+                      : <User className="w-10 h-10 text-primary" />
+                  }
                 </div>
 
                 <div className="flex-1">

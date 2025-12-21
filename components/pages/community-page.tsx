@@ -12,6 +12,7 @@ import {
 import api from "@/lib/api"
 import { formattedDateTime, getEmotionWeatherIcon } from "@/common/function"
 import ReactMarkdown from "react-markdown";
+import { useAuth } from "@/contenxts/AuthContext"
 interface Post {
   id: string
   author: string
@@ -75,7 +76,7 @@ export default function CommunityPage() {
   const [loadingComments, setLoadingComments] = useState(false)
   const [submittingComment, setSubmittingComment] = useState(false)
   const [liking, setLiking] = useState(false)
-
+  const { isLoggedIn, logout } = useAuth();
   const currentUserCode = useMemo(() => {
     if (typeof window === "undefined") return 0
     const raw = window.localStorage.getItem("userCode")
@@ -130,7 +131,6 @@ export default function CommunityPage() {
       setPosts(res.data.map(mapForumToPost))
     } catch (e) {
       console.error(e)
-      alert("게시글을 불러오지 못했습니다.")
     } finally {
       setLoading(false)
     }
@@ -196,6 +196,7 @@ export default function CommunityPage() {
 
   const handleLike = async (postId: string) => {
     if (liking) return
+    if(!isLoggedIn){alert("로그인 후 이용해주세요."); return;}
     try {
       setLiking(true)
       await api.post(`/api/board/${postId}/like`)
@@ -212,10 +213,12 @@ export default function CommunityPage() {
   const submitComment = async () => {
     const forumId = selectedPostId
     const content = commentText.trim()
+    if(!isLoggedIn){alert("로그인 후 이용해주세요."); return;}
     if (!forumId) return
     if (!content) return
 
     try {
+
       setSubmittingComment(true)
       await api.post(`/api/board/${forumId}/comments`, {
         content,
@@ -297,7 +300,7 @@ export default function CommunityPage() {
                               <span className="font-medium text-sm text-foreground">{post.author}</span>
                               <span className="text-xs text-muted-foreground">{post.date}</span>
                               <div className="flex items-center gap-1 text-xs">
-                                <WeatherIcon style={{scale:1.5}} className={`w-3 h-3 ${weatherColor}`} />
+                                <WeatherIcon style={{ scale: 1.5 }} className={`w-3 h-3 ${weatherColor}`} />
                                 <span className="text-muted-foreground">{weatherLabel}</span>
                               </div>
                             </div>
@@ -322,7 +325,7 @@ export default function CommunityPage() {
 
                     <div className="p-4 space-y-3">
                       <h3 className="font-semibold text-foreground text-base leading-relaxed">{post.title}</h3>
-                      {post.diaryDate&&
+                      {post.diaryDate &&
                         <h4>{`${post?.diaryDate[0]}년 ${post?.diaryDate[1]}월 ${post?.diaryDate[2]}일 작성된 일기`}</h4>
                       }
                       <p className="text-sm text-foreground/80 leading-relaxed">{truncatedContent}</p>
