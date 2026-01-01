@@ -129,7 +129,48 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 }
+.markdown-body h1 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 1.5rem 0 1rem;
+}
 
+.markdown-body h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.2rem 0 0.8rem;
+}
+
+.markdown-body h3 {
+  font-size: 1rem;
+  font-weight: 400;
+  margin: 1rem 0 0.75rem;
+}
+
+.markdown-body p {
+  margin: 0.75rem 0;
+  line-height: 1.7;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin-left: 1.5rem;
+  list-style: disc;
+}
+
+.markdown-body code {
+  background: #2a2a2a;
+  color: #dcdcdc;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.markdown-body pre code {
+  display: block;
+  padding: 1rem;
+  overflow-x: auto;
+}
 @layer base {
   * {
     @apply border-border outline-ring/50;

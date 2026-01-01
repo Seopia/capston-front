@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Play, Music, Leaf, Heart } from "lucide-react"
+import { Play, Music, Leaf, Heart, MessageCircle } from "lucide-react"
 import YouTube from 'react-youtube';
 interface Content {
   id: string
@@ -178,11 +178,18 @@ export default function MindCareContent() {
   const contents = selectedCategory === "meditation" ? meditationContents : musicContents
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-background to-muted/20">
+    <div className="flex flex-col h-[100dvh] inset-0 bg-gradient-to-b from-background to-muted/20 overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm">
-        <h2 className="font-semibold text-foreground text-lg">마음 관리</h2>
-        <p className="text-xs text-muted-foreground mt-1">명상과 음악으로 마음을 돌보세요</p>
+      <div className="flex-none border-b border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm flex items-center justify-between z-10">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <MessageCircle className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-foreground">마음 관리</h2>
+            <p className="text-xs text-muted-foreground">명상과 음악으로 마음을 돌보세요</p>
+          </div>
+        </div>
       </div>
       {/* <img width={50} src={"https://img.youtube.com/vi/vXvsSSD7yzE/0.jpg"} alt="any"/> */}
       {/* Category Tabs */}

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import ReactMarkdown from "react-markdown";
 import { useState, useRef, useEffect } from "react"
 import { Send, MessageCircle, Smile, Lightbulb } from "lucide-react"
 import api from "@/lib/api"
@@ -33,7 +33,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [suggestedTopics] = useState<string[]>(suggestedTopicsDefault)
   const [isFetchingPage, setIsFetchingPage] = useState(false)
-  const {isLoggedIn, logout} = useAuth();
+  const { isLoggedIn, logout } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
@@ -47,7 +47,7 @@ export default function ChatPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
-    if(!isLoggedIn) {
+    if (!isLoggedIn) {
       alert("로그인 후 이용할 수 있습니다.")
       history.push("/login");
     }
@@ -64,11 +64,13 @@ export default function ChatPage() {
     setMessages(prev => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
-
+    const isJailbreak = userMessage.text.startsWith("999");
+    userMessage.text = isJailbreak ? userMessage.text.slice(3) : userMessage.text
     try {
       const res = await api.post(`${process.env.NEXT_PUBLIC_FAST_API}/chat`, {
         message: userMessage.text,
         convId: chatRoomId,
+        isJailbreak: isJailbreak
       })
 
       const aiMessage: Message = {
@@ -89,10 +91,10 @@ export default function ChatPage() {
   }
 
   const getChatRoomData = async () => {
-    if(!localStorage.getItem('capstoneToken')) return;
+    if (!localStorage.getItem('capstoneToken')) return;
     await api.post("/auth/conversations", { ai: "DEFAULT" })
     const res2 = await api.get("/auth/conversations")
-    
+
     setChatRoomId(res2.data[0].id)
   }
 
@@ -115,7 +117,7 @@ export default function ChatPage() {
     try {
       const res = await api.get(`/auth/messages?roomId=${chatRoomId}&page=${page}`)
       console.log(res);
-      
+
       setLast(res.data.last)
       const newMessages: Message[] = res.data.content
         .slice()
@@ -124,7 +126,7 @@ export default function ChatPage() {
           id: `${page}-${i}`,
           text: d.content,
           sender: d.role,
-          timestamp: new Date(d.createAt[0],d.createAt[1] - 1,d.createAt[2],d.createAt[3],d.createAt[4],d.createAt[5],Math.floor(d.createAt[6] / 1_000_000),
+          timestamp: new Date(d.createAt[0], d.createAt[1] - 1, d.createAt[2], d.createAt[3], d.createAt[4], d.createAt[5], Math.floor(d.createAt[6] / 1_000_000),
           ),
         }))
 
@@ -135,7 +137,7 @@ export default function ChatPage() {
     }
   }
   useEffect(() => {
-    if(!localStorage.getItem('capstoneToken')) return;
+    if (!localStorage.getItem('capstoneToken')) return;
     const container = scrollContainerRef.current
     if (!container) return
     if (messages.length === 0) return
@@ -156,13 +158,22 @@ export default function ChatPage() {
     scrollToBottom("smooth")
   }, [messages])
 
-  useEffect(() => {getChatRoomData()}, [])
-  useEffect(() => { inView&&chatRoomId && getChatData();}, [inView, chatRoomId])
+  useEffect(() => { getChatRoomData() }, [])
+  useEffect(() => { inView && chatRoomId && getChatData(); }, [inView, chatRoomId])
+  const isClient = typeof window !== "undefined";
+  const [isMobile, setMobile] = useState(false);
 
+  useEffect(() => {
+    if (!isClient) return;
+    const update = () => setMobile(window.innerWidth <= 640);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [isClient]);
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-background to-muted/20">
+    <div className={`flex flex-col h-[100dvh] ${isMobile ? 'fixed' : ''} inset-0 bg-gradient-to-b from-background to-muted/20 overflow-hidden`}>
       {/* Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm flex items-center justify-between">
+      <div className="flex-none border-b border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1">
           <div className="p-2 bg-primary/10 rounded-lg">
             <MessageCircle className="w-5 h-5 text-primary" />
@@ -173,7 +184,6 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-
       {/* Messages */}
       <div
         className="flex-1 overflow-y-auto p-4 space-y-4"
@@ -214,24 +224,25 @@ export default function ChatPage() {
         {messages.map((message, i) => (
           <div
             key={message.id ?? i}
-            className={`flex ${
-              message.sender === "user" ? "justify-end" : "justify-start"
-            }`}
+            className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"
+              }`}
           >
             <div
-              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${
-                message.sender === "user"
-                  ? "bg-primary text-primary-foreground rounded-br-none shadow-sm"
-                  : "bg-card border border-border text-foreground rounded-bl-none shadow-sm"
-              }`}
-            >
-              <p className="text-sm leading-relaxed">{message.text}</p>
-              <p
-                className={`text-xs mt-2 ${
-                  message.sender === "user"
-                    ? "text-primary-foreground/70"
-                    : "text-muted-foreground"
+              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl ${message.sender === "user"
+                ? "bg-primary text-primary-foreground rounded-br-none shadow-sm"
+                : "bg-card border border-border text-foreground rounded-bl-none shadow-sm"
                 }`}
+            >
+              <div className="text-sm leading-relaxed">
+                <ReactMarkdown>
+                  {message.text}
+                </ReactMarkdown>
+              </div>
+              <p
+                className={`text-xs mt-2 ${message.sender === "user"
+                  ? "text-primary-foreground/70"
+                  : "text-muted-foreground"
+                  }`}
               >
                 {message.timestamp.toLocaleTimeString("ko-KR", {
                   hour: "2-digit",
@@ -258,7 +269,7 @@ export default function ChatPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-border bg-card p-4 shadow-lg">
+      <div className="flex-none border-t border-border bg-card p-4 shadow-lg pb-[max(1rem,env(safe-area-inset-bottom))]">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"

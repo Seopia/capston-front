@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { User, Mail, Calendar, Edit, Save, X, TrendingUp, Clock } from "lucide-react"
+import { User, Mail, Calendar, Edit, Save, X, TrendingUp, Clock, MessageCircle } from "lucide-react"
 import api from "@/lib/api"
 import { useAuth } from "@/contenxts/AuthContext"
 import { useRouter } from "next/navigation"
@@ -80,14 +80,19 @@ export default function ProfilePage() {
   }, [])
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-background to-muted/20">
+    <div className="flex flex-col h-[100dvh] inset-0 bg-gradient-to-b from-background to-muted/20 overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm flex items-center justify-between">
-        <div>
-          <h2 className="font-semibold text-foreground text-lg">프로필</h2>
-          <p className="text-xs text-muted-foreground mt-1">당신의 정보를 관리하세요</p>
+      <div className="flex-none border-b border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm flex items-center justify-between z-10">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <MessageCircle className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-foreground">프로필</h2>
+            <p className="text-xs text-muted-foreground">당신의 정보를 관리하세요</p>
+          </div>
         </div>
-        {!isEditing ? (
+         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
@@ -114,6 +119,7 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+      
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-6">

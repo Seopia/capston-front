@@ -1,5 +1,4 @@
 "use client"
-
 import { useEffect, useMemo, useState } from "react"
 import {
   Heart,
@@ -196,7 +195,7 @@ export default function CommunityPage() {
 
   const handleLike = async (postId: string) => {
     if (liking) return
-    if(!isLoggedIn){alert("로그인 후 이용해주세요."); return;}
+    if (!isLoggedIn) { alert("로그인 후 이용해주세요."); return; }
     try {
       setLiking(true)
       await api.post(`/api/board/${postId}/like`)
@@ -213,7 +212,7 @@ export default function CommunityPage() {
   const submitComment = async () => {
     const forumId = selectedPostId
     const content = commentText.trim()
-    if(!isLoggedIn){alert("로그인 후 이용해주세요."); return;}
+    if (!isLoggedIn) { alert("로그인 후 이용해주세요."); return; }
     if (!forumId) return
     if (!content) return
 
@@ -247,11 +246,16 @@ export default function CommunityPage() {
   }, [posts, sortBy])
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm flex items-center justify-between">
-        <div>
-          <h2 className="font-semibold text-foreground text-lg">일기 커뮤니티</h2>
-          <p className="text-xs text-muted-foreground mt-1">당신의 이야기를 나누고 서로를 응원해주세요</p>
+    <div className="flex flex-col h-[100dvh] inset-0 bg-gradient-to-b from-background to-muted/20 overflow-hidden">
+      <div className="flex-none border-b border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm flex items-center justify-between z-10">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <MessageCircle className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-foreground">일기 커뮤니티</h2>
+            <p className="text-xs text-muted-foreground">당신의 이야기를 나누고 서로를 응원해주세요</p>
+          </div>
         </div>
       </div>
 
@@ -386,7 +390,13 @@ export default function CommunityPage() {
                 <div className="p-6 space-y-4">
                   <div>
                     <h2 className="text-2xl font-semibold text-foreground mb-3">{selectedPost.title}</h2>
-                    <div className="text-foreground/80 leading-relaxed whitespace-pre-wrap">{selectedPost.content}</div>
+                    <div className="text-foreground/80 leading-relaxed">
+                      <div className="markdown-body text-foreground leading-relaxed">
+                        <ReactMarkdown>
+                          {selectedPost.content}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

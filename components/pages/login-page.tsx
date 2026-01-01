@@ -14,10 +14,6 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md">
-      <div style={{display:'flex', justifyContent:'center',alignItems:'center', flexDirection:'column'}}>
-        <div style={{fontSize:'2em', marginBottom:-40, fontWeight:'bolder'}}>www.react.ai.kr</div>
-        <img className="rounded-2xl m-5" src="/qr2.png"/>
-      </div>
       {/* Main Card */}
       <div className="bg-card rounded-3xl border border-border p-8 shadow-lg">
         {/* Header */}

@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" className="dark">
       <body className={`font-sans antialiased bg-background text-foreground`}>
         <AuthProvider>{children}</AuthProvider>
         <Analytics />

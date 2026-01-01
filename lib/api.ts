@@ -12,9 +12,10 @@ api.interceptors.response.use((res: AxiosResponse) :AxiosResponse => res,
 (err) => {
     console.log("에러다!",err);
     if(err.response?.status===401){
+        alert(err.response.data);
         // window.location.href = "/login";
     } else if(err.response?.status === 403){
-
+        alert(err.response.data);
     }
 }
 )

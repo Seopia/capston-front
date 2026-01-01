@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Sun, SunDim, Cloud, CloudRain, Zap, CloudLightning, Tornado, ChevronLeft, ChevronRight, X, TrendingUp, Share2, Wand2, } from "lucide-react"
+import { Sun, SunDim, Cloud, CloudRain, Zap, CloudLightning, Tornado, ChevronLeft, ChevronRight, X, TrendingUp, Share2, Wand2, MessageCircle, } from "lucide-react"
 import api from "@/lib/api"
 import BeatLoader from "react-spinners/BeatLoader"
 import { AxiosResponse } from "axios"
@@ -147,11 +147,18 @@ export default function EmotionCalendar() {
   const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"]
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-background to-muted/20 overflow-hidden">
+    <div className="flex flex-col h-[100dvh] inset-0 bg-gradient-to-b from-background to-muted/20 overflow-hidden">
       {/* Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm">
-        <h2 className="font-semibold text-foreground text-lg">감정 기록</h2>
-        <p className="text-xs text-muted-foreground mt-1">날씨로 표현된 당신의 감정을 확인하세요</p>
+      <div className="flex-none border-b border-border bg-card/50 backdrop-blur-sm p-4 shadow-sm flex items-center justify-between z-10">
+        <div className="flex items-center gap-3 flex-1">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <MessageCircle className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-foreground">감정 기록</h2>
+            <p className="text-xs text-muted-foreground">날씨로 표현된 당신의 감정을 확인하세요</p>
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
